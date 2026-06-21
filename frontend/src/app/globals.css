@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* Sky palette */
+  --sky-50: oklch(98.5% .012 230);
+  --sky-100: oklch(96% .025 230);
+  --sky-200: oklch(91% .05 230);
+  --sky-300: oklch(84% .08 230);
+  --sky-500: oklch(70% .14 235);
+  --sky-600: oklch(60% .16 240);
+  --sky-700: oklch(50% .15 245);
+
+  /* Semantic */
+  --background: oklch(98.5% .012 230);
+  --foreground: oklch(22% .04 250);
+  --primary: oklch(58% .17 245);
+  --primary-foreground: oklch(99% .005 230);
+  --secondary: oklch(95% .03 230);
+  --secondary-foreground: oklch(30% .08 250);
+  --muted: oklch(95% .02 230);
+  --muted-foreground: oklch(50% .04 250);
+  --accent: oklch(90% .06 230);
+  --accent-foreground: oklch(30% .1 250);
+  --destructive: oklch(62% .22 25);
+  --destructive-foreground: oklch(99% 0 0);
+  --card: oklch(100% 0 0 / .55);
+  --card-foreground: oklch(22% .04 250);
+  --border: oklch(100% 0 0 / .4);
+  --input: oklch(100% 0 0 / .6);
+  --ring: oklch(70% .14 235);
+  --radius: .875rem;
+
+  /* Gradients */
+  --gradient-page: linear-gradient(
+    180deg,
+    oklch(93% .07 230) 0%,
+    oklch(96% .04 225) 35%,
+    oklch(99% .012 220) 100%
+  );
+  --gradient-brand: linear-gradient(
+    135deg,
+    oklch(65% .16 240),
+    oklch(78% .12 220)
+  );
+
+  /* Shadows */
+  --shadow-glass: 0 8px 32px -8px oklch(55% .18 245 / .25),
+    inset 0 1px 0 0 oklch(100% 0 0 / .6);
+  --shadow-soft: 0 4px 20px -6px oklch(55% .18 245 / .15);
+}
+
+/* ── Tailwind theme bridge ───────────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-jakarta);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+body {
+  background: var(--gradient-page);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Utility classes ─────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-glass);
+}
+
+.btn-primary {
+  background: var(--gradient-brand);
+  color: var(--primary-foreground);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

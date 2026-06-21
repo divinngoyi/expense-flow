@@ -52,3 +52,31 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+#Misc
+.claude/
+.agents/
+.impeccable/
+
+Claude.md
+clerk-setup.md
+Design.md
+Product.md
+expense-flow-dev-plan-and-architecture.md
+general-project-setup-rules.md
+
+skills-lock.json
+
+# Environment files
+.env
+.env.*
+.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Docker
+.dockerignore
