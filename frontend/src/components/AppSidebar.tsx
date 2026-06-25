@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   List,
@@ -22,6 +23,14 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { signOut } = useClerk();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut(() => {
+      router.push("/");
+    });
+  }
 
   return (
     <aside className="hidden lg:flex w-64 flex-col p-4 gap-2 sticky top-0 h-screen">
@@ -61,14 +70,14 @@ export default function AppSidebar() {
 
         <div className="flex-1" />
 
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors hover:bg-white/50"
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors hover:bg-white/50 w-full text-left"
           style={{ color: "oklch(22% .04 250 / 0.7)" }}
         >
           <LogOut size={16} />
           Sign out
-        </Link>
+        </button>
       </nav>
     </aside>
   );

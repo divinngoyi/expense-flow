@@ -3,10 +3,11 @@ using ExpenseFlow.Application.Services;
 using ExpenseFlow.Domain.Entities;
 using ExpenseFlow.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ExpenseFlow.Database.Services;
 
-public class TransactionService(ExpenseFlowDbContext db) : ITransactionService
+public class TransactionService(ExpenseFlowDbContext db, ILogger<TransactionService> logger) : ITransactionService
 {
     public async Task<List<TransactionDto>> GetTransactionsAsync(Guid userId, int year, int month)
     {
@@ -77,6 +78,9 @@ public class TransactionService(ExpenseFlowDbContext db) : ITransactionService
         db.Transactions.Add(transaction);
         await db.SaveChangesAsync();
 
+        logger.LogInformation("Transaction created: {Id} | {Type} | {Amount} | User {UserId}",
+            transaction.Id, txType, request.Amount, userId);
+
         return await GetByIdAsync(userId, transaction.Id);
     }
 
@@ -132,6 +136,7 @@ public class TransactionService(ExpenseFlowDbContext db) : ITransactionService
         transaction.IsDeleted = true;
         transaction.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
+        logger.LogInformation("Transaction deleted: {Id} | User {UserId}", transactionId, userId);
     }
 
     public async Task<TransactionDto> ConfirmAsync(Guid userId, Guid transactionId)
