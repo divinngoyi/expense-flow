@@ -5,6 +5,7 @@ import { Plus, TrendingUp, TrendingDown, AlertCircle, RefreshCw } from "lucide-r
 import { useApi, DashboardSummaryDto, CategoryBreakdownItemDto } from "@/lib/api";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { useToast } from "@/components/Toast";
+import { useCountUp } from "@/hooks/useCountUp";
 
 function fmt(n: number) {
   return "R " + n.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -64,6 +65,10 @@ export default function DashboardPage() {
   }
 
   const netPositive = summary ? summary.netFlow >= 0 : true;
+  const dataLoaded = !loading && !!summary;
+  const animNetFlow = useCountUp(summary?.netFlow ?? 0, { active: dataLoaded });
+  const animMoneyIn = useCountUp(summary?.totalMoneyIn ?? 0, { active: dataLoaded });
+  const animMoneyOut = useCountUp(summary?.totalMoneyOut ?? 0, { active: dataLoaded });
 
   return (
     <>
@@ -128,7 +133,7 @@ export default function DashboardPage() {
           <>
             {/* Net Flow — hero card */}
             <div
-              className="glass p-6 relative overflow-hidden stagger-item"
+              className="glass glass-lift p-6 relative overflow-hidden stagger-item"
               style={{ "--i": 0 } as React.CSSProperties}
             >
               <div
@@ -145,10 +150,10 @@ export default function DashboardPage() {
                     NET FLOW
                   </p>
                   <div
-                    className="font-display font-bold text-5xl leading-none tabular-nums"
+                    className="font-display font-bold text-5xl leading-none tabular-nums number-in"
                     style={{ color: netPositive ? "var(--status-confirmed)" : "var(--destructive)" }}
                   >
-                    {fmt(summary.netFlow)}
+                    {fmt(animNetFlow)}
                   </div>
                   {summary.netFlowVsLastMonth != null && (
                     <p className="text-sm mt-2" style={{ color: "var(--muted-foreground)" }}>
@@ -172,7 +177,7 @@ export default function DashboardPage() {
               {[
                 {
                   label: "Money In",
-                  amount: fmt(summary.totalMoneyIn),
+                  amount: fmt(animMoneyIn),
                   delta: summary.moneyInChangePercent != null
                     ? `${summary.moneyInChangePercent > 0 ? "+" : ""}${summary.moneyInChangePercent}% vs last month`
                     : "No prior month",
@@ -182,7 +187,7 @@ export default function DashboardPage() {
                 },
                 {
                   label: "Money Out",
-                  amount: fmt(summary.totalMoneyOut),
+                  amount: fmt(animMoneyOut),
                   delta: summary.moneyOutChangePercent != null
                     ? `${summary.moneyOutChangePercent > 0 ? "+" : ""}${summary.moneyOutChangePercent}% vs last month`
                     : "No prior month",
@@ -193,7 +198,7 @@ export default function DashboardPage() {
               ].map((card) => (
                 <div
                   key={card.label}
-                  className="glass p-5 space-y-2 stagger-item"
+                  className="glass glass-lift p-5 space-y-2 stagger-item"
                   style={{ "--i": card.i } as React.CSSProperties}
                 >
                   <div className="flex items-center justify-between">
@@ -202,7 +207,7 @@ export default function DashboardPage() {
                     </span>
                     <card.icon size={14} style={{ color: "var(--muted-foreground)" }} />
                   </div>
-                  <div className="font-display font-bold text-xl tabular-nums">{card.amount}</div>
+                  <div className="font-display font-bold text-xl tabular-nums number-in">{card.amount}</div>
                   <div
                     className="text-xs font-medium"
                     style={{ color: card.positive ? "var(--status-confirmed)" : "var(--destructive)" }}

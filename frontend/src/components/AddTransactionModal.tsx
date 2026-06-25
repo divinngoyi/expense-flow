@@ -231,35 +231,37 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
             >
               <ChevronDown
                 size={14}
-                style={{ transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }}
+                style={{ transform: showAdvanced ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 220ms var(--ease-out-quint)" }}
               />
               ADVANCED
             </button>
 
-            {showAdvanced && (
-              <div className="mt-3 space-y-1 fade-in">
-                <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted-foreground)" }}>
-                  STATUS
-                </label>
-                <p className="text-xs" style={{ color: "var(--muted-foreground)", opacity: 0.8 }}>
-                  Confirmed transactions count in your totals. Use Pending for future or uncertain items.
-                </p>
-                <div className="flex gap-2 mt-2">
-                  {(["Confirmed", "Pending"] as const).map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setStatus(s)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-semibold transition ${
-                        status === s ? "bg-brand-gradient text-white shadow-sm" : "glass-subtle hover:bg-white/70"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+            <div className={`accordion-grid ${showAdvanced ? "open" : ""}`}>
+              <div>
+                <div className="mt-3 space-y-1">
+                  <label className="text-xs font-semibold tracking-wide" style={{ color: "var(--muted-foreground)" }}>
+                    STATUS
+                  </label>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)", opacity: 0.8 }}>
+                    Confirmed transactions count in your totals. Use Pending for future or uncertain items.
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    {(["Confirmed", "Pending"] as const).map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setStatus(s)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-semibold transition ${
+                          status === s ? "bg-brand-gradient text-white shadow-sm" : "glass-subtle hover:bg-white/70"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
           {error && (

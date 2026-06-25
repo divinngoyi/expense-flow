@@ -19,8 +19,8 @@ export default function MobileNav() {
     <nav
       className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t"
       style={{
-        background: "linear-gradient(135deg, rgba(255,255,255,0.82), rgba(255,255,255,0.65))",
-        backdropFilter: "blur(16px)",
+        background: "linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7))",
+        backdropFilter: "blur(20px)",
         borderColor: "oklch(100% 0 0 / 0.5)",
       }}
     >
@@ -31,11 +31,28 @@ export default function MobileNav() {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2.5 px-1 transition-colors"
-              style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}
+              className="flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-3 px-1"
+              style={{
+                color: active ? "var(--primary)" : "var(--muted-foreground)",
+                transition: "color 160ms var(--ease-out-quart)",
+              }}
             >
-              <Icon size={20} strokeWidth={active ? 2.5 : 1.75} />
-              <span className="text-[10px] font-medium leading-tight">{label}</span>
+              {/* Icon with relative container for the dot */}
+              <div className="relative mb-0.5">
+                <Icon
+                  size={20}
+                  strokeWidth={active ? 2.5 : 1.75}
+                  style={{ transition: "stroke-width 160ms, color 160ms" }}
+                />
+                {/* Active dot below the icon */}
+                {active && <span className="nav-dot" />}
+              </div>
+              <span
+                className="text-[10px] font-medium leading-tight"
+                style={{ transition: "color 160ms, font-weight 160ms" }}
+              >
+                {label}
+              </span>
             </Link>
           );
         })}

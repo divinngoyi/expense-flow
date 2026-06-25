@@ -81,6 +81,17 @@ body {
   box-shadow: var(--shadow-glass);
 }
 
+/* Glass cards that should respond to hover (content cards, not sidebars/modals) */
+.glass-lift {
+  transition: transform 200ms var(--ease-out-quart), box-shadow 200ms var(--ease-out-quart);
+}
+@media (hover: hover) {
+  .glass-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px -8px oklch(55% .18 245 / .28), inset 0 1px 0 0 oklch(100% 0 0 / .75);
+  }
+}
+
 .glass-subtle {
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid oklch(100% 0 0 / 0.45);
@@ -90,6 +101,17 @@ body {
 /* ── Brand gradient utilities ────────────────────────────────────────────── */
 .bg-brand-gradient {
   background: var(--gradient-brand);
+  transition: transform 120ms var(--ease-out-quart), box-shadow 150ms var(--ease-out-quart), opacity 120ms;
+}
+@media (hover: hover) {
+  .bg-brand-gradient:hover {
+    transform: scale(1.015);
+    box-shadow: 0 8px 28px -4px oklch(55% .18 245 / .45);
+  }
+}
+.bg-brand-gradient:active {
+  transform: scale(0.965);
+  transition-duration: 80ms;
 }
 
 .text-gradient-brand {
@@ -143,6 +165,21 @@ body {
 @keyframes toast-slide-out {
   from { opacity: 1; transform: translateX(0); }
   to   { opacity: 0; transform: translateX(110%); }
+}
+
+@keyframes dot-pop {
+  from { transform: translateX(-50%) scale(0); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes nav-glow {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes number-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes skeleton-shimmer {
@@ -199,6 +236,40 @@ body {
   animation: toast-slide-out 200ms ease-in both;
 }
 
+/* Mobile nav active indicator dot */
+.nav-dot {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--primary);
+  animation: dot-pop 180ms var(--ease-out-quint) both;
+}
+
+/* Accordion (grid-template-rows trick) */
+.accordion-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 240ms var(--ease-out-quint),
+              opacity 200ms var(--ease-out-quart);
+}
+.accordion-grid.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.accordion-grid > * {
+  overflow: hidden;
+}
+
+/* Number reveal */
+.number-in {
+  animation: number-in 320ms var(--ease-out-quint) both;
+}
+
 /* Input focus ring using CSS */
 .input-focus:focus {
   outline: 2px solid var(--ring);
@@ -219,7 +290,12 @@ body {
   .skeleton,
   .fade-in,
   .toast-entering,
-  .toast-exiting {
+  .toast-exiting,
+  .nav-dot,
+  .number-in,
+  .glass-lift,
+  .bg-brand-gradient,
+  .accordion-grid {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
