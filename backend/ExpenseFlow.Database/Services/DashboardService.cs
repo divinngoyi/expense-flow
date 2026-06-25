@@ -48,21 +48,32 @@ public class DashboardService(ExpenseFlowDbContext db) : IDashboardService
         var from = new DateOnly(year, month, 1);
         var to = from.AddMonths(1).AddDays(-1);
 
-        return await db.Transactions
-            .Include(t => t.Category)
+        // Fetch minimal projection server-side (EF Core can't translate Join+GroupBy+aggregate together)
+        var rows = await db.Transactions
             .Where(t => t.UserId == userId && !t.IsDeleted
                      && t.TransactionStatus == TransactionStatus.Confirmed
                      && t.TransactionType == TransactionType.MoneyOut
                      && t.TransactionDate >= from && t.TransactionDate <= to
                      && t.CategoryId != null)
-            .GroupBy(t => new { t.CategoryId, t.Category!.Name })
+            .Select(t => new { t.CategoryId, t.Amount })
+            .ToListAsync();
+
+        var categoryIds = rows.Select(r => r.CategoryId!.Value).Distinct().ToList();
+
+        var nameMap = await db.Categories
+            .Where(c => categoryIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.Name })
+            .ToDictionaryAsync(c => c.Id, c => c.Name);
+
+        return rows
+            .GroupBy(r => r.CategoryId!.Value)
             .Select(g => new CategoryBreakdownItemDto(
-                g.Key.CategoryId!.Value,
-                g.Key.Name,
-                g.Sum(t => t.Amount),
+                g.Key,
+                nameMap.GetValueOrDefault(g.Key, "Uncategorised"),
+                g.Sum(r => r.Amount),
                 g.Count()))
             .OrderByDescending(x => x.Total)
-            .ToListAsync();
+            .ToList();
     }
 
     public async Task<List<SourceBreakdownItemDto>> GetSourceBreakdownAsync(Guid userId, int year, int month)

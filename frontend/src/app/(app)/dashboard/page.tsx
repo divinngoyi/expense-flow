@@ -101,7 +101,7 @@ export default function DashboardPage() {
           >
             <AlertCircle size={28} className="mx-auto" style={{ color: "var(--destructive)" }} />
             <p className="text-sm font-medium">Couldn&apos;t load your data.</p>
-            <button
+<button
               onClick={load}
               className="inline-flex items-center gap-2 glass-subtle px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/70 transition"
               style={{ color: "var(--foreground)" }}
