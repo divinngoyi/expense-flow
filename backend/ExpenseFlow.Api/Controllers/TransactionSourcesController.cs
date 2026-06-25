@@ -1,3 +1,6 @@
+using ExpenseFlow.Api.Extensions;
+using ExpenseFlow.Application.DTOs;
+using ExpenseFlow.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,17 +9,34 @@ namespace ExpenseFlow.Api.Controllers;
 [ApiController]
 [Route("api/transaction-sources")]
 [Authorize]
-public class TransactionSourcesController : ControllerBase
+public class TransactionSourcesController(
+    ITransactionSourceService sourceService,
+    IUserService userService) : ControllerBase
 {
+    private async Task<Guid> GetUserIdAsync() =>
+        (await userService.GetByClerkIdAsync(User.GetClerkUserId())
+         ?? throw new UnauthorizedAccessException("User not synced")).Id;
+
     [HttpGet]
-    public IActionResult GetAll() =>
-        Ok(new { message = "Transaction sources endpoint — not yet implemented" });
+    public async Task<IActionResult> GetAll()
+    {
+        var userId = await GetUserIdAsync();
+        return Ok(await sourceService.GetSourcesAsync(userId));
+    }
 
     [HttpPost]
-    public IActionResult Create() =>
-        StatusCode(501, new { message = "Create source — not yet implemented" });
+    public async Task<IActionResult> Create([FromBody] CreateTransactionSourceRequest request)
+    {
+        var userId = await GetUserIdAsync();
+        var source = await sourceService.CreateSourceAsync(userId, request);
+        return CreatedAtAction(nameof(GetAll), source);
+    }
 
     [HttpPut("{id:guid}")]
-    public IActionResult Update(Guid id) =>
-        StatusCode(501, new { message = "Update source — not yet implemented", id });
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionSourceRequest request)
+    {
+        var userId = await GetUserIdAsync();
+        var source = await sourceService.UpdateSourceAsync(userId, id, request);
+        return Ok(source);
+    }
 }

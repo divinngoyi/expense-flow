@@ -61,16 +61,24 @@ nunit-*.xml
 Claude.md
 clerk-setup.md
 Design.md
+Memory.md
 Product.md
+Agents.md
 expense-flow-dev-plan-and-architecture.md
 general-project-setup-rules.md
 
 skills-lock.json
 
+
+ExpenseFlow.Api.http
+
 # Environment files
 .env
 .env.*
 .env.example
+.vs
+appsettings.Development.json
+launchSettings.json
 
 # Node / Next.js
 node_modules/
@@ -80,3 +88,4 @@ npm-debug.log*
 
 # Docker
 .dockerignore
+docker-compose.yml

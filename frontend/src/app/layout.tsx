@@ -28,13 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`}
-      >
-        <body className="min-h-full">{children}</body>
-      </html>
-    </ClerkProvider>
+    <html
+      lang="en"
+      className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`}
+    >
+      <body className="min-h-full">
+        <ClerkProvider>{children}</ClerkProvider>
+      </body>
+    </html>
   );
 }

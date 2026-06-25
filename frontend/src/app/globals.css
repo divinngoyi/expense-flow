@@ -2,7 +2,6 @@
 
 /* ── Design tokens ───────────────────────────────────────────────────────── */
 :root {
-  /* Sky palette */
   --sky-50: oklch(98.5% .012 230);
   --sky-100: oklch(96% .025 230);
   --sky-200: oklch(91% .05 230);
@@ -11,7 +10,6 @@
   --sky-600: oklch(60% .16 240);
   --sky-700: oklch(50% .15 245);
 
-  /* Semantic */
   --background: oklch(98.5% .012 230);
   --foreground: oklch(22% .04 250);
   --primary: oklch(58% .17 245);
@@ -31,22 +29,14 @@
   --ring: oklch(70% .14 235);
   --radius: .875rem;
 
-  /* Gradients */
   --gradient-page: linear-gradient(
     180deg,
     oklch(93% .07 230) 0%,
     oklch(96% .04 225) 35%,
     oklch(99% .012 220) 100%
   );
-  --gradient-brand: linear-gradient(
-    135deg,
-    oklch(65% .16 240),
-    oklch(78% .12 220)
-  );
-
-  /* Shadows */
-  --shadow-glass: 0 8px 32px -8px oklch(55% .18 245 / .25),
-    inset 0 1px 0 0 oklch(100% 0 0 / .6);
+  --gradient-brand: linear-gradient(135deg, oklch(65% .16 240), oklch(78% .12 220));
+  --shadow-glass: 0 8px 32px -8px oklch(55% .18 245 / .25), inset 0 1px 0 0 oklch(100% 0 0 / .6);
   --shadow-soft: 0 4px 20px -6px oklch(55% .18 245 / .15);
 }
 
@@ -58,7 +48,6 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-card: var(--card);
   --color-border: var(--border);
   --font-sans: var(--font-inter);
   --font-display: var(--font-jakarta);
@@ -73,22 +62,38 @@ body {
   min-height: 100vh;
 }
 
-/* ── Utility classes ─────────────────────────────────────────────────────── */
-.glass-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+/* ── Glass utilities ─────────────────────────────────────────────────────── */
+.glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.35));
+  border: 1px solid oklch(100% 0 0 / 0.5);
   border-radius: 22px;
   box-shadow: var(--shadow-glass);
 }
 
-.btn-primary {
-  background: var(--gradient-brand);
-  color: var(--primary-foreground);
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid oklch(100% 0 0 / 0.45);
   border-radius: var(--radius);
-  font-weight: 600;
 }
 
-/* Reduce motion */
+/* ── Brand gradient utilities ────────────────────────────────────────────── */
+.bg-brand-gradient {
+  background: var(--gradient-brand);
+}
+
+.text-gradient-brand {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Font utility ────────────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+}
+
+/* ── Reduce motion ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

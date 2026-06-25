@@ -1,3 +1,4 @@
+using ExpenseFlow.Api.Extensions;
 using ExpenseFlow.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -5,11 +6,11 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database ────────────────────────────────────────────────────────────────
+// ── Database ─────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<ExpenseFlowDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── Authentication (Clerk JWT) ───────────────────────────────────────────────
+// ── Authentication (Clerk JWT) ────────────────────────────────────────────────
 var clerkIssuer = builder.Configuration["Clerk:Issuer"];
 var clerkJwksUrl = builder.Configuration["Clerk:JwksUrl"];
 var clerkAudience = builder.Configuration["Clerk:Audience"];
@@ -41,7 +42,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ── CORS ─────────────────────────────────────────────────────────────────────
+// ── CORS ──────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration["CORS:AllowedOrigins"]
     ?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
 
@@ -52,21 +53,21 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials()));
 
-// ── Controllers + Swagger ────────────────────────────────────────────────────
+// ── Application services ──────────────────────────────────────────────────────
+builder.Services.AddApplicationServices();
+
+// ── Controllers + Swagger ─────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ── Middleware ───────────────────────────────────────────────────────────────
 app.UseSwagger();
 app.UseSwaggerUI();
-
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
