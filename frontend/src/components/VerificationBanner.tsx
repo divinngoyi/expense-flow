@@ -19,13 +19,20 @@ export default function VerificationBanner() {
   }
 
   return (
-    <div className="w-full bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center justify-between text-sm">
-      <span className="text-amber-800">
+    <div
+      className="w-full px-6 py-2.5 flex items-center justify-between text-sm border-b"
+      style={{
+        background: "oklch(97% .06 80 / 0.7)",
+        borderColor: "oklch(85% .1 75)",
+      }}
+    >
+      <span style={{ color: "oklch(35% .1 75)" }}>
         Please verify your email address to secure your Expense Flow account. Check your inbox.
       </span>
       <button
         onClick={handleResend}
-        className="text-amber-700 font-medium underline underline-offset-2 hover:text-amber-900 transition-colors"
+        className="font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
+        style={{ color: "oklch(35% .12 75)" }}
       >
         Resend verification
       </button>

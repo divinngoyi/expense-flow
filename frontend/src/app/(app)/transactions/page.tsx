@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, AlertCircle, RefreshCw, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useApi, TransactionDto } from "@/lib/api";
 import AddTransactionModal from "@/components/AddTransactionModal";
-
-const statusColor: Record<string, string> = {
-  Confirmed: "oklch(55% .18 150)",
-  Pending: "oklch(65% .15 75)",
-  Skipped: "var(--muted-foreground)",
-};
+import { useToast } from "@/components/Toast";
 
 type Filter = "All" | "MoneyIn" | "MoneyOut" | "Pending";
 
@@ -22,19 +17,42 @@ function fmtAmt(tx: TransactionDto) {
   return `${prefix}R ${Math.abs(tx.amount).toLocaleString("en-ZA", { minimumFractionDigits: 2 })}`;
 }
 
+function TableSkeleton() {
+  return (
+    <div className="glass overflow-hidden">
+      <div className="p-5 space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex gap-4 items-center">
+            <div className="skeleton h-4 w-16" />
+            <div className="skeleton h-4 flex-1" />
+            <div className="skeleton h-4 w-20" />
+            <div className="skeleton h-4 w-20" />
+            <div className="skeleton h-4 w-16 ml-auto" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function TransactionsPage() {
   const api = useApi();
+  const toast = useToast();
   const [transactions, setTransactions] = useState<TransactionDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
   const [modalOpen, setModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   async function load() {
+    setError(false);
     try {
       const data = await api.getTransactions();
       setTransactions(data);
     } catch {
-      // ignore
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -42,20 +60,39 @@ export default function TransactionsPage() {
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this transaction?")) return;
+  function initiateDelete(id: string) {
+    clearTimeout(deleteTimerRef.current);
+    setPendingDeleteId(id);
+    deleteTimerRef.current = setTimeout(() => setPendingDeleteId(null), 3000);
+  }
+
+  async function confirmDelete(id: string) {
+    clearTimeout(deleteTimerRef.current);
+    setPendingDeleteId(null);
     await api.deleteTransaction(id).catch(() => {});
     setTransactions(prev => prev.filter(t => t.id !== id));
+    toast("Transaction deleted", "info");
   }
 
   async function handleConfirm(id: string) {
     const updated = await api.confirmTransaction(id).catch(() => null);
-    if (updated) setTransactions(prev => prev.map(t => t.id === id ? updated : t));
+    if (updated) {
+      setTransactions(prev => prev.map(t => t.id === id ? updated : t));
+      toast("Transaction confirmed");
+    }
   }
 
   async function handleSkip(id: string) {
     const updated = await api.skipTransaction(id).catch(() => null);
-    if (updated) setTransactions(prev => prev.map(t => t.id === id ? updated : t));
+    if (updated) {
+      setTransactions(prev => prev.map(t => t.id === id ? updated : t));
+      toast("Transaction skipped", "info");
+    }
+  }
+
+  function handleTransactionCreated() {
+    load();
+    toast("Transaction added");
   }
 
   const filtered = transactions.filter(tx => {
@@ -73,11 +110,21 @@ export default function TransactionsPage() {
     { key: "Pending", label: "Pending" },
   ];
 
+  const statusColor: Record<string, string> = {
+    Confirmed: "var(--status-confirmed)",
+    Pending: "var(--status-pending)",
+    Skipped: "var(--status-skipped)",
+  };
+
   return (
     <>
-      <AddTransactionModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={load} />
+      <AddTransactionModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={handleTransactionCreated}
+      />
 
-      <div className="space-y-6 max-w-5xl">
+      <div className="space-y-5 max-w-5xl page-enter">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="font-display font-bold text-2xl">Transactions</h1>
@@ -87,20 +134,22 @@ export default function TransactionsPage() {
           </div>
           <button
             onClick={() => setModalOpen(true)}
-            className="bg-brand-gradient text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:opacity-90 transition"
+            className="bg-brand-gradient text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:opacity-90 active:scale-[0.97] transition"
           >
             <Plus size={16} />
             Add transaction
           </button>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {filters.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-                filter === f.key ? "bg-brand-gradient text-white shadow-md" : "glass-subtle hover:bg-white/70"
+                filter === f.key
+                  ? "bg-brand-gradient text-white shadow-md"
+                  : "glass-subtle hover:bg-white/70"
               }`}
               style={filter === f.key ? undefined : { color: "var(--foreground)" }}
             >
@@ -110,16 +159,93 @@ export default function TransactionsPage() {
         </div>
 
         {loading ? (
-          <div className="glass p-8 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-            Loading…
+          <TableSkeleton />
+        ) : error ? (
+          <div className="glass p-10 text-center space-y-3" style={{ color: "var(--muted-foreground)" }}>
+            <AlertCircle size={28} className="mx-auto" style={{ color: "var(--destructive)" }} />
+            <p className="text-sm font-medium">Couldn&apos;t load your transactions.</p>
+            <button
+              onClick={load}
+              className="inline-flex items-center gap-2 glass-subtle px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/70 transition"
+              style={{ color: "var(--foreground)" }}
+            >
+              <RefreshCw size={14} />
+              Try again
+            </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="glass p-8 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
-            No transactions found. Add one to get started.
+          <div className="glass p-10 text-center space-y-2 fade-in">
+            <ArrowDownLeft size={32} className="mx-auto opacity-20" />
+            <p className="font-medium">
+              {filter === "All" ? "No transactions this month" : `No ${filter === "MoneyIn" ? "money in" : filter === "MoneyOut" ? "money out" : "pending"} transactions`}
+            </p>
+            {filter === "All" && (
+              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                Add your first transaction to get started.
+              </p>
+            )}
           </div>
         ) : (
           <div className="glass overflow-hidden">
-            <table className="w-full text-sm">
+            {/* Mobile card list */}
+            <div className="lg:hidden divide-y" style={{ borderColor: "var(--border)" }}>
+              {filtered.map((tx, i) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/30 transition-colors stagger-item"
+                  style={{ "--i": i } as React.CSSProperties}
+                >
+                  <div
+                    className="size-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: tx.transactionType === "MoneyIn"
+                        ? "oklch(96% .05 150)"
+                        : "oklch(96% .02 250)",
+                    }}
+                  >
+                    {tx.transactionType === "MoneyIn"
+                      ? <ArrowDownLeft size={14} style={{ color: "var(--status-confirmed)" }} />
+                      : <ArrowUpRight size={14} style={{ color: "var(--muted-foreground)" }} />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{tx.description || tx.categoryName || "—"}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+                      {fmtDate(tx.transactionDate)} · {tx.transactionSourceName}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-sm font-semibold tabular-nums"
+                      style={{ color: tx.transactionType === "MoneyIn" ? "var(--status-confirmed)" : "var(--foreground)" }}
+                    >
+                      {fmtAmt(tx)}
+                    </span>
+                    {pendingDeleteId === tx.id ? (
+                      <button
+                        onClick={() => confirmDelete(tx.id)}
+                        className="text-xs px-2 py-1 rounded-lg font-medium transition"
+                        style={{ background: "var(--destructive)", color: "white" }}
+                      >
+                        Delete?
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => initiateDelete(tx.id)}
+                        className="p-1 rounded hover:bg-red-50 transition"
+                        style={{ color: "var(--destructive)" }}
+                        aria-label="Delete transaction"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <table className="hidden lg:table w-full text-sm">
               <thead>
                 <tr className="border-b" style={{ borderColor: "var(--border)" }}>
                   {["DATE", "DESCRIPTION", "CATEGORY", "SOURCE", "STATUS", "AMOUNT", ""].map((h, i) => (
@@ -134,11 +260,14 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((tx) => (
+                {filtered.map((tx, i) => (
                   <tr
                     key={tx.id}
-                    className="border-b last:border-0 hover:bg-white/30 transition-colors"
-                    style={{ borderColor: "var(--border)" }}
+                    className="border-b last:border-0 hover:bg-white/30 transition-colors stagger-item"
+                    style={{
+                      borderColor: "var(--border)",
+                      "--i": i,
+                    } as React.CSSProperties}
                   >
                     <td className="px-5 py-3.5 whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>
                       {fmtDate(tx.transactionDate)}
@@ -151,44 +280,71 @@ export default function TransactionsPage() {
                       {tx.transactionSourceName}
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium" style={{ color: statusColor[tx.transactionStatus] }}>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{
+                          color: statusColor[tx.transactionStatus],
+                          background: tx.transactionStatus === "Confirmed"
+                            ? "oklch(96% .05 150)"
+                            : tx.transactionStatus === "Pending"
+                            ? "oklch(97% .05 75)"
+                            : "var(--muted)",
+                        }}>
                           {tx.transactionStatus}
                         </span>
                         {tx.transactionStatus === "Pending" && (
-                          <button
-                            onClick={() => handleConfirm(tx.id)}
-                            className="text-xs glass-subtle px-1.5 py-0.5 rounded hover:bg-white/70 transition"
-                            style={{ color: "oklch(55% .18 150)" }}
-                          >
-                            Confirm
-                          </button>
-                        )}
-                        {tx.transactionStatus !== "Skipped" && tx.transactionStatus === "Pending" && (
-                          <button
-                            onClick={() => handleSkip(tx.id)}
-                            className="text-xs glass-subtle px-1.5 py-0.5 rounded hover:bg-white/70 transition"
-                            style={{ color: "var(--muted-foreground)" }}
-                          >
-                            Skip
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleConfirm(tx.id)}
+                              className="text-xs glass-subtle px-2 py-0.5 rounded-lg hover:bg-white/70 transition font-medium"
+                              style={{ color: "var(--status-confirmed)" }}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => handleSkip(tx.id)}
+                              className="text-xs glass-subtle px-2 py-0.5 rounded-lg hover:bg-white/70 transition font-medium"
+                              style={{ color: "var(--muted-foreground)" }}
+                            >
+                              Skip
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
                     <td
                       className="px-5 py-3.5 text-right font-semibold tabular-nums"
-                      style={{ color: tx.transactionType === "MoneyIn" ? "oklch(55% .18 150)" : "var(--foreground)" }}
+                      style={{ color: tx.transactionType === "MoneyIn" ? "var(--status-confirmed)" : "var(--foreground)" }}
                     >
                       {fmtAmt(tx)}
                     </td>
                     <td className="px-3 py-3.5">
-                      <button
-                        onClick={() => handleDelete(tx.id)}
-                        className="p-1 rounded hover:bg-red-100 transition"
-                        style={{ color: "var(--destructive)" }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {pendingDeleteId === tx.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => confirmDelete(tx.id)}
+                            className="text-xs px-2 py-1 rounded-lg font-medium transition"
+                            style={{ background: "var(--destructive)", color: "white" }}
+                          >
+                            Delete?
+                          </button>
+                          <button
+                            onClick={() => setPendingDeleteId(null)}
+                            className="text-xs glass-subtle px-2 py-1 rounded-lg hover:bg-white/70 transition"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => initiateDelete(tx.id)}
+                          className="p-1.5 rounded-lg hover:bg-red-50 transition"
+                          style={{ color: "var(--destructive)" }}
+                          aria-label="Delete transaction"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -37,7 +37,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl page-enter">
       <div>
         <h1 className="font-display font-bold text-2xl">Settings</h1>
         <p className="text-sm mt-0.5" style={{ color: "var(--muted-foreground)" }}>
@@ -72,7 +72,7 @@ export default function SettingsPage() {
         </p>
         <button
           onClick={handleSignOut}
-          className="glass-subtle px-4 py-2.5 text-sm font-medium hover:bg-white/70 transition"
+          className="glass-subtle px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-white/70 transition"
         >
           Sign out
         </button>

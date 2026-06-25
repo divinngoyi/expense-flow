@@ -29,6 +29,12 @@
   --ring: oklch(70% .14 235);
   --radius: .875rem;
 
+  /* Semantic status colors */
+  --status-confirmed: oklch(55% .18 150);
+  --status-pending: oklch(65% .15 75);
+  --status-skipped: oklch(50% .04 250);
+  --money-in-color: oklch(55% .18 150);
+
   --gradient-page: linear-gradient(
     180deg,
     oklch(93% .07 230) 0%,
@@ -38,6 +44,11 @@
   --gradient-brand: linear-gradient(135deg, oklch(65% .16 240), oklch(78% .12 220));
   --shadow-glass: 0 8px 32px -8px oklch(55% .18 245 / .25), inset 0 1px 0 0 oklch(100% 0 0 / .6);
   --shadow-soft: 0 4px 20px -6px oklch(55% .18 245 / .15);
+
+  /* Easing curves */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Tailwind theme bridge ───────────────────────────────────────────────── */
@@ -93,10 +104,124 @@ body {
   font-family: var(--font-jakarta), system-ui, sans-serif;
 }
 
+/* ── Animations ──────────────────────────────────────────────────────────── */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modal-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+@keyframes backdrop-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes backdrop-exit {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(110%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-slide-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(110%); }
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+.page-enter {
+  animation: page-enter 240ms var(--ease-out-quint) both;
+}
+
+.fade-in {
+  animation: fade-in 200ms var(--ease-out-quart) both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    oklch(94% .015 230) 25%,
+    oklch(97% .008 230) 50%,
+    oklch(94% .015 230) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* Staggered list items — set --i on each element */
+.stagger-item {
+  animation: page-enter 220ms var(--ease-out-quint) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 45ms);
+}
+
+/* Modal animation states */
+.modal-entering .modal-backdrop {
+  animation: backdrop-enter 200ms var(--ease-out-quart) both;
+}
+.modal-entering .modal-panel {
+  animation: modal-enter 260ms var(--ease-out-quint) both;
+}
+.modal-exiting .modal-backdrop {
+  animation: backdrop-exit 160ms ease-in both;
+}
+.modal-exiting .modal-panel {
+  animation: modal-exit 160ms ease-in both;
+}
+
+/* Toast animation states */
+.toast-entering {
+  animation: toast-slide-in 280ms var(--ease-out-quint) both;
+}
+.toast-exiting {
+  animation: toast-slide-out 200ms ease-in both;
+}
+
+/* Input focus ring using CSS */
+.input-focus:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 0;
+}
+
+/* Button micro-interaction */
+.btn-press:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease-in;
+}
+
 /* ── Reduce motion ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  .page-enter,
+  .stagger-item,
+  .skeleton,
+  .fade-in,
+  .toast-entering,
+  .toast-exiting {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }
