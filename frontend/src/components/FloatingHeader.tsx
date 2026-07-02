@@ -5,7 +5,7 @@ import { TrendingUp } from "lucide-react";
 
 export default function FloatingHeader() {
   return (
-    <header className="max-w-6xl mx-auto px-6 pt-6 w-full">
+    <header className="max-w-6xl mx-auto px-6 pt-6 w-full header-enter">
       <div className="glass px-5 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="bg-brand-gradient size-9 rounded-lg grid place-items-center text-white">
