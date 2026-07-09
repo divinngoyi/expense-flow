@@ -31,9 +31,8 @@ export default function SettingsPage() {
   ];
 
   async function handleSignOut() {
-    await signOut(() => {
-      router.push("/");
-    });
+    router.push("/");
+    signOut();
   }
 
   return (

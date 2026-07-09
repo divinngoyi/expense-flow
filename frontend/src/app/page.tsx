@@ -1,12 +1,7 @@
 import FloatingHeader from "@/components/FloatingHeader";
 import ScrollReveal from "@/components/ScrollReveal";
-import {
-  TrendingUp,
-  List,
-  CalendarDays,
-  ArrowDownLeft,
-  ArrowUpRight,
-} from "lucide-react";
+import LandingPreviewSlides from "@/components/LandingPreviewSlides";
+import { TrendingUp, List, CalendarDays } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = { title: "Expense Flow — See where your money goes" };
@@ -28,128 +23,6 @@ const features = [
     body: "See activity across every day of the month. Tap any day to see what sits behind the number.",
   },
 ];
-
-/* ── Mini dashboard preview (static mockup) ─────────────────────────── */
-function AppPreview() {
-  const txns = [
-    { name: "Salary", cat: "Income", amount: "+R 15,000", type: "in", status: "Confirmed" },
-    { name: "Woolworths", cat: "Groceries", amount: "-R 890", type: "out", status: "Confirmed" },
-    { name: "Spotify", cat: "Entertainment", amount: "-R 99", type: "out", status: "Pending" },
-    { name: "Freelance", cat: "Income", amount: "+R 3,500", type: "in", status: "Confirmed" },
-  ];
-
-  return (
-    <div className="glass rounded-2xl overflow-hidden shadow-2xl">
-      {/* Browser chrome */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 border-b"
-        style={{ background: "rgba(255,255,255,0.6)", borderColor: "rgba(255,255,255,0.5)" }}
-      >
-        <div className="flex gap-1.5">
-          <div className="size-3 rounded-full" style={{ background: "oklch(70% .18 25 / 0.7)" }} />
-          <div className="size-3 rounded-full" style={{ background: "oklch(75% .15 80 / 0.7)" }} />
-          <div className="size-3 rounded-full" style={{ background: "oklch(65% .18 150 / 0.7)" }} />
-        </div>
-        <div
-          className="flex-1 rounded-md text-center text-xs py-1"
-          style={{ background: "rgba(255,255,255,0.6)", color: "var(--muted-foreground)" }}
-        >
-          expenseflow.app/dashboard
-        </div>
-        <div className="w-14" />
-      </div>
-
-      {/* App shell */}
-      <div className="flex" style={{ background: "rgba(255,255,255,0.15)", minHeight: "340px" }}>
-        {/* Sidebar */}
-        <div
-          className="hidden md:flex flex-col gap-1 p-3 w-44 flex-shrink-0 border-r"
-          style={{ borderColor: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.25)" }}
-        >
-          {[
-            { label: "Dashboard", active: false },
-            { label: "Transactions", active: true },
-            { label: "Calendar", active: false },
-            { label: "Categories", active: false },
-          ].map(item => (
-            <div
-              key={item.label}
-              className="px-3 py-2 rounded-lg text-xs font-medium"
-              style={{
-                background: item.active ? "var(--gradient-brand)" : "transparent",
-                color: item.active ? "white" : "oklch(22% .04 250 / 0.55)",
-              }}
-            >
-              {item.label}
-            </div>
-          ))}
-        </div>
-
-        {/* Content: transaction list */}
-        <div className="flex-1 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="font-display font-bold text-sm">Transactions</div>
-              <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>June 2026</div>
-            </div>
-            <div
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              + Add
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {txns.map((tx, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.55)" }}
-              >
-                <div
-                  className="size-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{
-                    background: tx.type === "in"
-                      ? "oklch(88% .1 150 / 0.5)"
-                      : "oklch(88% .1 25 / 0.5)",
-                  }}
-                >
-                  {tx.type === "in"
-                    ? <ArrowDownLeft size={11} style={{ color: "var(--status-confirmed)" }} />
-                    : <ArrowUpRight size={11} style={{ color: "var(--destructive)" }} />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate">{tx.name}</div>
-                  <div className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{tx.cat}</div>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div
-                    className="text-xs font-bold"
-                    style={{ color: tx.type === "in" ? "var(--status-confirmed)" : "var(--destructive)" }}
-                  >
-                    {tx.amount}
-                  </div>
-                  <div
-                    className="text-[9px] font-medium"
-                    style={{
-                      color: tx.status === "Confirmed"
-                        ? "var(--status-confirmed)"
-                        : "var(--status-pending)",
-                    }}
-                  >
-                    {tx.status}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ── Page ─────────────────────────────────────────────────────────────── */
 export default function LandingPage() {
@@ -245,7 +118,7 @@ export default function LandingPage() {
           </p>
         </ScrollReveal>
         <ScrollReveal delay={80}>
-          <AppPreview />
+          <LandingPreviewSlides />
         </ScrollReveal>
       </section>
 

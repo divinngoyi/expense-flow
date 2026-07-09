@@ -42,8 +42,7 @@ export default function ScrollReveal({ children, delay = 0, className = "", styl
       style={{
         ...style,
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(20px)",
-        transition: `opacity 480ms var(--ease-out-quint) ${delay}ms, transform 480ms var(--ease-out-quint) ${delay}ms`,
+        transition: `opacity 480ms var(--ease-out-quint) ${delay}ms`,
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Plus, TrendingUp, TrendingDown, AlertCircle, RefreshCw } from "lucide-react";
 import { useApi, DashboardSummaryDto, CategoryBreakdownItemDto } from "@/lib/api";
 import AddTransactionModal from "@/components/AddTransactionModal";
@@ -32,6 +33,7 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
+  const { isLoaded } = useAuth();
   const api = useApi();
   const toast = useToast();
   const [summary, setSummary] = useState<DashboardSummaryDto | null>(null);
@@ -57,7 +59,10 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isLoaded) return;
+    load();
+  }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleTransactionCreated() {
     load();
