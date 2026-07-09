@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using ExpenseFlow.Api.Extensions;
 using ExpenseFlow.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -85,6 +87,32 @@ builder.Services.AddCors(options =>
 // ── Application services ──────────────────────────────────────────────────────
 builder.Services.AddApplicationServices();
 
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Per-IP sliding window: 60 requests per minute
+    options.AddPolicy("api", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+
+    options.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.StatusCode = 429;
+        await ctx.HttpContext.Response.WriteAsJsonAsync(
+            new { error = "Too many requests. Please wait a moment and try again." }, ct);
+    };
+});
+
 // ── Controllers + Swagger ─────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -148,8 +176,9 @@ app.Use(async (context, next) =>
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("api");
 
 app.Run();
