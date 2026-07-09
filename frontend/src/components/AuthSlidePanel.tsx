@@ -251,6 +251,7 @@ export default function AuthSlidePanel() {
   const [idx, setIdx] = useState(0);
   const [slideKey, setSlideKey] = useState(0);
   const [exiting, setExiting] = useState(false);
+  const [hasTransitioned, setHasTransitioned] = useState(false);
 
   function goTo(newIdx: number) {
     if (newIdx === idx || exiting) return;
@@ -258,6 +259,7 @@ export default function AuthSlidePanel() {
     const t = setTimeout(() => {
       setIdx(newIdx);
       setSlideKey(k => k + 1);
+      setHasTransitioned(true);
       setExiting(false);
     }, EXIT_MS + 20);
     return () => clearTimeout(t);
@@ -270,6 +272,7 @@ export default function AuthSlidePanel() {
       swap = setTimeout(() => {
         setIdx(i => (i + 1) % SLIDES.length);
         setSlideKey(k => k + 1);
+        setHasTransitioned(true);
         setExiting(false);
       }, EXIT_MS + 20);
     }, INTERVAL);
@@ -282,7 +285,10 @@ export default function AuthSlidePanel() {
   const SlideContent = SLIDES[idx].component;
 
   return (
-    <div className="hidden lg:flex flex-col justify-between p-12 bg-brand-gradient relative overflow-hidden">
+    <div
+      className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden"
+      style={{ background: "var(--gradient-brand)" }}
+    >
       {/* Decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -right-32 size-96 rounded-full bg-white/10 blur-3xl" />
@@ -303,9 +309,9 @@ export default function AuthSlidePanel() {
         <div
           key={slideKey}
           style={{
-            animation: exiting
-              ? "none"
-              : "slide-panel-enter 400ms var(--ease-out-quint) both",
+            animation: (!exiting && hasTransitioned)
+              ? "slide-panel-enter 400ms var(--ease-out-quint) both"
+              : "none",
             opacity: exiting ? 0 : undefined,
             transform: exiting ? "translateY(-8px)" : undefined,
             transition: exiting

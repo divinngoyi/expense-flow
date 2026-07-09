@@ -33,6 +33,17 @@ export default function RootLayout({
       className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        {/* Fixed gradient background — sits behind all content at all scroll depths */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: -1,
+            background: "var(--gradient-page)",
+            pointerEvents: "none",
+          }}
+        />
         <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>
