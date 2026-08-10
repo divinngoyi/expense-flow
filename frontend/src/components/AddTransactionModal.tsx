@@ -2,16 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, ChevronDown } from "lucide-react";
-import { useApi, CategoryDto, TransactionSourceDto, CreateTransactionRequest } from "@/lib/api";
+import { useApi, CategoryDto, TransactionSourceDto, CreateTransactionRequest, TransactionDto } from "@/lib/api";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated?: () => void;
+  onUpdated?: (tx: TransactionDto) => void;
+  transaction?: TransactionDto;
 }
 
-export default function AddTransactionModal({ open, onClose, onCreated }: Props) {
+export default function AddTransactionModal({ open, onClose, onCreated, onUpdated, transaction }: Props) {
   const api = useApi();
+  const isEditing = !!transaction;
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [sources, setSources] = useState<TransactionSourceDto[]>([]);
 
@@ -21,7 +24,7 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [categoryId, setCategoryId] = useState("");
   const [sourceId, setSourceId] = useState("");
-  const [status, setStatus] = useState<"Confirmed" | "Pending">("Confirmed");
+  const [status, setStatus] = useState<"Confirmed" | "Pending" | "Skipped">("Confirmed");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -39,11 +42,33 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
   useEffect(() => {
     if (!open) return;
     setExiting(false);
+    setError("");
+    setShowAdvanced(isEditing); // show advanced (status) open when editing so status is visible
+
+    if (transaction) {
+      setType(transaction.transactionType);
+      setAmount(String(transaction.amount));
+      setDescription(transaction.description ?? "");
+      setDate(transaction.transactionDate);
+      setStatus(transaction.transactionStatus);
+      setCategoryId(transaction.categoryId ?? "");
+      setSourceId(transaction.transactionSourceId);
+    } else {
+      setType("MoneyOut");
+      setAmount("");
+      setDescription("");
+      setDate(new Date().toISOString().slice(0, 10));
+      setStatus("Confirmed");
+      setCategoryId("");
+    }
+
     Promise.all([api.getCategories(), api.getSources()])
       .then(([cats, srcs]) => {
         setCategories(cats);
         setSources(srcs);
-        if (srcs.length > 0) setSourceId(srcs.find(s => s.isDefault)?.id ?? srcs[0].id);
+        if (!transaction && srcs.length > 0) {
+          setSourceId(srcs.find(s => s.isDefault)?.id ?? srcs[0].id);
+        }
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,26 +91,38 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
     setSaving(true);
     setError("");
 
-    const req: CreateTransactionRequest = {
-      transactionType: type,
-      amount: parseFloat(amount),
-      description: description || undefined,
-      transactionDate: date,
-      transactionStatus: status,
-      categoryId: categoryId || undefined,
-      transactionSourceId: sourceId,
-    };
-
     try {
-      await api.createTransaction(req);
-      onCreated();
-      handleClose();
-      // Reset form
-      setAmount("");
-      setDescription("");
-      setStatus("Confirmed");
-      setShowAdvanced(false);
-      setError("");
+      if (isEditing && transaction) {
+        const updated = await api.updateTransaction(transaction.id, {
+          transactionType: type,
+          amount: parseFloat(amount),
+          description: description || undefined,
+          transactionDate: date,
+          transactionStatus: status,
+          categoryId: categoryId || undefined,
+          transactionSourceId: sourceId,
+        });
+        onUpdated?.(updated);
+        handleClose();
+      } else {
+        const req: CreateTransactionRequest = {
+          transactionType: type,
+          amount: parseFloat(amount),
+          description: description || undefined,
+          transactionDate: date,
+          transactionStatus: status,
+          categoryId: categoryId || undefined,
+          transactionSourceId: sourceId,
+        };
+        await api.createTransaction(req);
+        onCreated?.();
+        handleClose();
+        setAmount("");
+        setDescription("");
+        setStatus("Confirmed");
+        setShowAdvanced(false);
+        setError("");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save. Please try again.");
     } finally {
@@ -107,7 +144,7 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
       />
       <div className="modal-panel glass relative w-full sm:max-w-md p-6 space-y-5 z-10 rounded-b-none sm:rounded-[22px] max-h-[90dvh] overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-lg">Add transaction</h2>
+          <h2 className="font-display font-bold text-lg">{isEditing ? "Edit transaction" : "Add transaction"}</h2>
           <button
             onClick={handleClose}
             className="glass-subtle p-1.5 rounded-lg hover:bg-white/70 transition"
@@ -246,7 +283,7 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
                     Confirmed transactions count in your totals. Use Pending for future or uncertain items.
                   </p>
                   <div className="flex gap-2 mt-2">
-                    {(["Confirmed", "Pending"] as const).map(s => (
+                    {(isEditing ? ["Confirmed", "Pending", "Skipped"] as const : ["Confirmed", "Pending"] as const).map(s => (
                       <button
                         key={s}
                         type="button"
@@ -275,7 +312,7 @@ export default function AddTransactionModal({ open, onClose, onCreated }: Props)
             disabled={saving}
             className="w-full bg-brand-gradient text-white py-3 rounded-xl text-sm font-semibold shadow-md hover:opacity-90 active:scale-[0.98] transition disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Add transaction"}
+            {saving ? "Saving…" : isEditing ? "Save changes" : "Add transaction"}
           </button>
         </form>
       </div>

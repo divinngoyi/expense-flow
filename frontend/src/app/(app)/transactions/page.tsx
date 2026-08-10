@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, AlertCircle, RefreshCw, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Plus, Trash2, Pencil, AlertCircle, RefreshCw, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useApi, TransactionDto } from "@/lib/api";
 import AddTransactionModal from "@/components/AddTransactionModal";
+import TransactionDetailModal from "@/components/TransactionDetailModal";
 import { useToast } from "@/components/Toast";
 
 type Filter = "All" | "MoneyIn" | "MoneyOut" | "Pending";
@@ -42,7 +43,10 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [viewTx, setViewTx] = useState<TransactionDto | null>(null);
+  const [editTx, setEditTx] = useState<TransactionDto | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -60,6 +64,11 @@ export default function TransactionsPage() {
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function openEdit(tx: TransactionDto) {
+    setEditTx(tx);
+    setEditOpen(true);
+  }
+
   function initiateDelete(id: string) {
     clearTimeout(deleteTimerRef.current);
     setPendingDeleteId(id);
@@ -71,6 +80,7 @@ export default function TransactionsPage() {
     setPendingDeleteId(null);
     await api.deleteTransaction(id).catch(() => {});
     setTransactions(prev => prev.filter(t => t.id !== id));
+    if (viewTx?.id === id) setViewTx(null);
     toast("Transaction deleted", "info");
   }
 
@@ -93,6 +103,18 @@ export default function TransactionsPage() {
   function handleTransactionCreated() {
     load();
     toast("Transaction added");
+  }
+
+  function handleTransactionUpdated(updated: TransactionDto) {
+    setTransactions(prev => prev.map(t => t.id === updated.id ? updated : t));
+    setEditOpen(false);
+    setEditTx(null);
+    toast("Transaction updated");
+  }
+
+  function handleDetailDeleted(id: string) {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    setViewTx(null);
   }
 
   const filtered = transactions.filter(tx => {
@@ -119,9 +141,23 @@ export default function TransactionsPage() {
   return (
     <>
       <AddTransactionModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
         onCreated={handleTransactionCreated}
+      />
+
+      <AddTransactionModal
+        open={editOpen}
+        onClose={() => { setEditOpen(false); setEditTx(null); }}
+        onUpdated={handleTransactionUpdated}
+        transaction={editTx ?? undefined}
+      />
+
+      <TransactionDetailModal
+        transaction={viewTx}
+        onClose={() => setViewTx(null)}
+        onEdit={openEdit}
+        onDeleted={handleDetailDeleted}
       />
 
       <div className="space-y-5 max-w-5xl page-enter">
@@ -133,7 +169,7 @@ export default function TransactionsPage() {
             </p>
           </div>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => setAddOpen(true)}
             className="bg-brand-gradient text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:opacity-90 active:scale-[0.97] transition"
           >
             <Plus size={16} />
@@ -192,7 +228,8 @@ export default function TransactionsPage() {
               {filtered.map((tx, i) => (
                 <div
                   key={tx.id}
-                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/30 transition-colors stagger-item"
+                  onClick={() => setViewTx(tx)}
+                  className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/30 transition-colors stagger-item cursor-pointer"
                   style={{ "--i": i } as React.CSSProperties}
                 >
                   <div
@@ -214,13 +251,21 @@ export default function TransactionsPage() {
                       {fmtDate(tx.transactionDate)} · {tx.transactionSourceName}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
                     <span
-                      className="text-sm font-semibold tabular-nums"
+                      className="text-sm font-semibold tabular-nums mr-1"
                       style={{ color: tx.transactionType === "MoneyIn" ? "var(--status-confirmed)" : "var(--foreground)" }}
                     >
                       {fmtAmt(tx)}
                     </span>
+                    <button
+                      onClick={() => openEdit(tx)}
+                      className="p-1 rounded hover:bg-white/60 transition"
+                      style={{ color: "var(--muted-foreground)" }}
+                      aria-label="Edit transaction"
+                    >
+                      <Pencil size={13} />
+                    </button>
                     {pendingDeleteId === tx.id ? (
                       <button
                         onClick={() => confirmDelete(tx.id)}
@@ -236,7 +281,7 @@ export default function TransactionsPage() {
                         style={{ color: "var(--destructive)" }}
                         aria-label="Delete transaction"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     )}
                   </div>
@@ -263,7 +308,8 @@ export default function TransactionsPage() {
                 {filtered.map((tx, i) => (
                   <tr
                     key={tx.id}
-                    className="border-b last:border-0 hover:bg-white/30 transition-colors stagger-item"
+                    onClick={() => setViewTx(tx)}
+                    className="border-b last:border-0 hover:bg-white/30 transition-colors stagger-item cursor-pointer"
                     style={{
                       borderColor: "var(--border)",
                       "--i": i,
@@ -294,14 +340,14 @@ export default function TransactionsPage() {
                         {tx.transactionStatus === "Pending" && (
                           <>
                             <button
-                              onClick={() => handleConfirm(tx.id)}
+                              onClick={e => { e.stopPropagation(); handleConfirm(tx.id); }}
                               className="text-xs glass-subtle px-2 py-0.5 rounded-lg hover:bg-white/70 transition font-medium"
                               style={{ color: "var(--status-confirmed)" }}
                             >
                               Confirm
                             </button>
                             <button
-                              onClick={() => handleSkip(tx.id)}
+                              onClick={e => { e.stopPropagation(); handleSkip(tx.id); }}
                               className="text-xs glass-subtle px-2 py-0.5 rounded-lg hover:bg-white/70 transition font-medium"
                               style={{ color: "var(--muted-foreground)" }}
                             >
@@ -317,7 +363,7 @@ export default function TransactionsPage() {
                     >
                       {fmtAmt(tx)}
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-3 py-3.5" onClick={e => e.stopPropagation()}>
                       {pendingDeleteId === tx.id ? (
                         <div className="flex items-center gap-1">
                           <button
@@ -336,14 +382,24 @@ export default function TransactionsPage() {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => initiateDelete(tx.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 transition"
-                          style={{ color: "var(--destructive)" }}
-                          aria-label="Delete transaction"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            onClick={() => openEdit(tx)}
+                            className="p-1.5 rounded-lg hover:bg-white/60 transition"
+                            style={{ color: "var(--muted-foreground)" }}
+                            aria-label="Edit transaction"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => initiateDelete(tx.id)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 transition"
+                            style={{ color: "var(--destructive)" }}
+                            aria-label="Delete transaction"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
