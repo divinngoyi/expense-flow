@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
+  const { user, isLoaded, signOut } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -26,13 +25,19 @@ export default function SettingsPage() {
   }
 
   const profileFields = [
-    { label: "Full name", value: user?.fullName || user?.username || "—" },
-    { label: "Email", value: user?.primaryEmailAddress?.emailAddress || "—" },
+    {
+      label: "Full name",
+      value: typeof user?.user_metadata.full_name === "string"
+        ? user.user_metadata.full_name
+        : "—",
+    },
+    { label: "Email", value: user?.email || "—" },
   ];
 
   async function handleSignOut() {
-    router.push("/");
-    signOut();
+    await signOut();
+    router.replace("/");
+    router.refresh();
   }
 
   return (

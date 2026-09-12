@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/AuthProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
 
@@ -9,7 +9,7 @@ export type SourceType = "Bank" | "Cash" | "DigitalWallet";
 
 export interface AppUserDto {
   id: string;
-  clerkUserId: string;
+  externalAuthUserId: string;
   email: string;
   displayName?: string;
   createdAt: string;
@@ -147,10 +147,10 @@ async function fetchApi<T>(
 
 // ── Hook-based client (use inside React components) ──────────────────────────
 export function useApi() {
-  const { getToken } = useAuth();
+  const { getAccessToken } = useAuth();
 
   async function call<T>(path: string, options?: RequestInit): Promise<T> {
-    const token = await getToken();
+    const token = await getAccessToken();
     if (!token) throw new Error("Not authenticated");
     return fetchApi<T>(token, path, options);
   }
@@ -165,7 +165,7 @@ export function useApi() {
     syncUser: (email: string, displayName?: string) =>
       call<AppUserDto>("/api/users/sync", {
         method: "POST",
-        body: JSON.stringify({ clerkUserId: "", email, displayName }),
+        body: JSON.stringify({ externalAuthUserId: "", email, displayName }),
       }),
     getMe: () => call<AppUserDto>("/api/users/me"),
 

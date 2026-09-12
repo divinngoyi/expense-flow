@@ -1,40 +1,53 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { createClient } from "@/lib/supabase/client";
 
 export default function VerificationBanner() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useAuth();
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
-  if (!isLoaded || !user) return null;
-
-  // Google and other OAuth users have verified email by default
-  const isOAuth = user.externalAccounts.length > 0;
-  const isVerified =
-    isOAuth || user.primaryEmailAddress?.verification?.status === "verified";
-
-  if (isVerified) return null;
+  if (!isLoaded || !user || user.email_confirmed_at) return null;
 
   async function handleResend() {
-    await user?.primaryEmailAddress?.prepareVerification({ strategy: "email_code" });
+    if (!user?.email || status === "sending") return;
+
+    setStatus("sending");
+    const supabase = createClient();
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: user.email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      },
+    });
+    setStatus(error ? "error" : "sent");
   }
 
   return (
     <div
-      className="w-full px-6 py-2.5 flex items-center justify-between text-sm border-b"
+      className="flex w-full items-center justify-between gap-4 border-b px-6 py-2.5 text-sm"
       style={{
         background: "oklch(97% .06 80 / 0.7)",
         borderColor: "oklch(85% .1 75)",
       }}
     >
-      <span style={{ color: "oklch(35% .1 75)" }}>
-        Please verify your email address to secure your Expense Flow account. Check your inbox.
+      <span style={{ color: "oklch(35% .1 75)" }} role="status">
+        {status === "sent"
+          ? "A new verification email is on its way."
+          : status === "error"
+            ? "We couldn’t resend the email. Please try again."
+            : "Please verify your email address to secure your Expense Flow account."}
       </span>
       <button
+        type="button"
         onClick={handleResend}
-        className="font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
+        disabled={status === "sending" || status === "sent"}
+        className="shrink-0 font-medium underline underline-offset-2 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
         style={{ color: "oklch(35% .12 75)" }}
       >
-        Resend verification
+        {status === "sending" ? "Sending…" : status === "sent" ? "Sent" : "Resend verification"}
       </button>
     </div>
   );

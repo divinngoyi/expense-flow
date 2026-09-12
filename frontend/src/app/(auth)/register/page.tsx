@@ -1,7 +1,7 @@
-import { SignUp } from "@clerk/nextjs";
+import AuthForm from "@/components/AuthForm";
 
 export const metadata = { title: "Create account — Expense Flow" };
 
 export default function RegisterPage() {
-  return <SignUp routing="hash" forceRedirectUrl="/dashboard" />;
+  return <AuthForm mode="register" />;
 }

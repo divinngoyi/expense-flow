@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/components/AuthProvider";
 import { Plus, TrendingUp, TrendingDown, AlertCircle, RefreshCw } from "lucide-react";
 import { useApi, DashboardSummaryDto, CategoryBreakdownItemDto } from "@/lib/api";
 import AddTransactionModal from "@/components/AddTransactionModal";

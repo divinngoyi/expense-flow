@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { useAuth } from "@/components/AuthProvider";
 import {
   LayoutDashboard,
   List,
@@ -23,13 +23,13 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut(() => {
-      router.push("/");
-    });
+    await signOut();
+    router.replace("/");
+    router.refresh();
   }
 
   return (

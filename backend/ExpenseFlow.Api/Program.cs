@@ -41,34 +41,33 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ExpenseFlowDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── Authentication (Clerk JWT) ────────────────────────────────────────────────
-var clerkIssuer = builder.Configuration["Clerk:Issuer"];
-var clerkJwksUrl = builder.Configuration["Clerk:JwksUrl"];
-var clerkAudience = builder.Configuration["Clerk:Audience"];
+// ── Authentication (Supabase JWT) ─────────────────────────────────────────────
+var supabaseUrl = builder.Configuration["Supabase:Url"]
+    ?? builder.Configuration["NEXT_PUBLIC_SUPABASE_URL"];
+if (string.IsNullOrWhiteSpace(supabaseUrl))
+    throw new InvalidOperationException("Supabase:Url is required.");
+
+var supabaseIssuer = $"{supabaseUrl.TrimEnd('/')}/auth/v1";
+var supabaseAudience = builder.Configuration["Supabase:Audience"] ?? "authenticated";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Authority = supabaseIssuer;
+        options.Audience = supabaseAudience;
+        options.RequireHttpsMetadata = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = !string.IsNullOrEmpty(clerkIssuer),
-            ValidIssuer = clerkIssuer,
-            ValidateAudience = !string.IsNullOrEmpty(clerkAudience),
-            ValidAudience = clerkAudience,
+            ValidateIssuer = true,
+            ValidIssuer = supabaseIssuer,
+            ValidateAudience = true,
+            ValidAudience = supabaseAudience,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = !string.IsNullOrEmpty(clerkJwksUrl),
+            ValidateIssuerSigningKey = true,
+            NameClaimType = "sub",
+            RoleClaimType = "role",
+            ClockSkew = TimeSpan.FromMinutes(1),
         };
-
-        if (!string.IsNullOrEmpty(clerkJwksUrl))
-        {
-            options.TokenValidationParameters.IssuerSigningKeyResolver = (_, _, _, _) =>
-            {
-                using var client = new HttpClient();
-                var json = client.GetStringAsync(clerkJwksUrl).GetAwaiter().GetResult();
-                var keys = new JsonWebKeySet(json);
-                return keys.GetSigningKeys();
-            };
-        }
     });
 
 builder.Services.AddAuthorization();

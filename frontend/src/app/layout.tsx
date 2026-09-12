@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,7 +44,7 @@ export default function RootLayout({
             pointerEvents: "none",
           }}
         />
-        <ClerkProvider>{children}</ClerkProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
