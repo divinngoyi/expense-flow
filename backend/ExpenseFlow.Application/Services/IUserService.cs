@@ -5,5 +5,5 @@ namespace ExpenseFlow.Application.Services;
 public interface IUserService
 {
     Task<AppUserDto> SyncUserAsync(SyncUserRequest request);
-    Task<AppUserDto?> GetByClerkIdAsync(string clerkUserId);
+    Task<AppUserDto?> GetByExternalAuthIdAsync(string externalAuthUserId);
 }

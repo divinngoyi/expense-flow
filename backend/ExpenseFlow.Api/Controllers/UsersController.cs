@@ -14,8 +14,8 @@ public class UsersController(IUserService userService) : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
     {
-        var clerkId = User.GetClerkUserId();
-        var user = await userService.GetByClerkIdAsync(clerkId);
+        var externalAuthUserId = User.GetExternalAuthUserId();
+        var user = await userService.GetByExternalAuthIdAsync(externalAuthUserId);
         if (user is null) return NotFound(new { message = "User not found. Call /sync first." });
         return Ok(user);
     }
@@ -23,12 +23,12 @@ public class UsersController(IUserService userService) : ControllerBase
     [HttpPost("sync")]
     public async Task<IActionResult> Sync([FromBody] SyncUserRequest request)
     {
-        // Override ClerkUserId from the JWT — never trust the body for identity
-        var clerkId = User.GetClerkUserId();
+        // Override ExternalAuthUserId from the JWT — never trust the body for identity
+        var externalAuthUserId = User.GetExternalAuthUserId();
         var email = User.FindFirst("email")?.Value ?? request.Email;
         var name = User.FindFirst("name")?.Value ?? request.DisplayName;
 
-        var user = await userService.SyncUserAsync(new SyncUserRequest(clerkId, email, name));
+        var user = await userService.SyncUserAsync(new SyncUserRequest(externalAuthUserId, email, name));
         return Ok(user);
     }
 }

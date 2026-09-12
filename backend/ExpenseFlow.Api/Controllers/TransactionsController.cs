@@ -14,7 +14,7 @@ public class TransactionsController(
     IUserService userService) : ControllerBase
 {
     private async Task<Guid> GetUserIdAsync() =>
-        (await userService.GetByClerkIdAsync(User.GetClerkUserId())
+        (await userService.GetByExternalAuthIdAsync(User.GetExternalAuthUserId())
          ?? throw new UnauthorizedAccessException("User not synced")).Id;
 
     [HttpGet]

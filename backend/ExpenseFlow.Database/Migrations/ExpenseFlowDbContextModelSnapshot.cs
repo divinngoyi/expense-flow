@@ -29,11 +29,6 @@ namespace ExpenseFlow.Database.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<string>("ClerkUserId")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -45,6 +40,11 @@ namespace ExpenseFlow.Database.Migrations
                         .IsRequired()
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)");
+
+                    b.Property<string>("ExternalAuthUserId")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -59,7 +59,7 @@ namespace ExpenseFlow.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClerkUserId")
+                    b.HasIndex("ExternalAuthUserId")
                         .IsUnique();
 
                     b.ToTable("AppUsers", (string)null);

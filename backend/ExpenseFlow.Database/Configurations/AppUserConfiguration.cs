@@ -11,8 +11,8 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.ToTable("AppUsers");
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).HasDefaultValueSql("gen_random_uuid()");
-        builder.Property(u => u.ClerkUserId).IsRequired().HasMaxLength(256);
-        builder.HasIndex(u => u.ClerkUserId).IsUnique();
+        builder.Property(u => u.ExternalAuthUserId).IsRequired().HasMaxLength(256);
+        builder.HasIndex(u => u.ExternalAuthUserId).IsUnique();
         builder.Property(u => u.Email).IsRequired().HasMaxLength(320);
         builder.Property(u => u.DisplayName).HasMaxLength(256);
         builder.Property(u => u.CreatedAt).IsRequired();

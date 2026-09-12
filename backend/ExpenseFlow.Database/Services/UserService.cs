@@ -12,16 +12,16 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
     public async Task<AppUserDto> SyncUserAsync(SyncUserRequest request)
     {
         var user = await db.AppUsers
-            .FirstOrDefaultAsync(u => u.ClerkUserId == request.ClerkUserId && !u.IsDeleted);
+            .FirstOrDefaultAsync(u => u.ExternalAuthUserId == request.ExternalAuthUserId && !u.IsDeleted);
 
         if (user is null)
         {
-            logger.LogInformation("New user synced: {ClerkUserId} ({Email})", request.ClerkUserId, request.Email);
+            logger.LogInformation("New user synced: {ExternalAuthUserId} ({Email})", request.ExternalAuthUserId, request.Email);
 
             user = new AppUser
             {
                 Id = Guid.NewGuid(),
-                ClerkUserId = request.ClerkUserId,
+                ExternalAuthUserId = request.ExternalAuthUserId,
                 Email = request.Email,
                 DisplayName = request.DisplayName,
                 CreatedAt = DateTime.UtcNow,
@@ -39,7 +39,7 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
         }
         else
         {
-            logger.LogInformation("Returning user synced: {ClerkUserId}", request.ClerkUserId);
+            logger.LogInformation("Returning user synced: {ExternalAuthUserId}", request.ExternalAuthUserId);
             user.Email = request.Email;
             if (request.DisplayName is not null) user.DisplayName = request.DisplayName;
             user.LastLoginAt = DateTime.UtcNow;
@@ -50,13 +50,13 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
         return ToDto(user);
     }
 
-    public async Task<AppUserDto?> GetByClerkIdAsync(string clerkUserId)
+    public async Task<AppUserDto?> GetByExternalAuthIdAsync(string externalAuthUserId)
     {
         var user = await db.AppUsers
-            .FirstOrDefaultAsync(u => u.ClerkUserId == clerkUserId && !u.IsDeleted);
+            .FirstOrDefaultAsync(u => u.ExternalAuthUserId == externalAuthUserId && !u.IsDeleted);
         return user is null ? null : ToDto(user);
     }
 
     private static AppUserDto ToDto(AppUser u) =>
-        new(u.Id, u.ClerkUserId, u.Email, u.DisplayName, u.CreatedAt);
+        new(u.Id, u.ExternalAuthUserId, u.Email, u.DisplayName, u.CreatedAt);
 }

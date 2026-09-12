@@ -16,7 +16,7 @@ namespace ExpenseFlow.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    ClerkUserId = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    ExternalAuthUserId = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     Email = table.Column<string>(type: "character varying(320)", maxLength: 320, nullable: false),
                     DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -121,9 +121,9 @@ namespace ExpenseFlow.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AppUsers_ClerkUserId",
+                name: "IX_AppUsers_ExternalAuthUserId",
                 table: "AppUsers",
-                column: "ClerkUserId",
+                column: "ExternalAuthUserId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
