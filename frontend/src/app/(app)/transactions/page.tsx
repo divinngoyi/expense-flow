@@ -161,8 +161,8 @@ export default function TransactionsPage() {
       />
 
       <div className="space-y-5 max-w-5xl page-enter">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="font-display font-bold text-2xl">Transactions</h1>
             <p className="text-sm mt-0.5" style={{ color: "var(--muted-foreground)" }}>
               Everything that moved this month.
@@ -170,10 +170,12 @@ export default function TransactionsPage() {
           </div>
           <button
             onClick={() => setAddOpen(true)}
-            className="bg-brand-gradient text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md hover:opacity-90 active:scale-[0.97] transition"
+            className="bg-brand-gradient flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-semibold text-white shadow-md sm:size-auto sm:gap-2 sm:px-4 sm:py-2.5"
+            aria-label="Add transaction"
+            title="Add transaction"
           >
-            <Plus size={16} />
-            Add transaction
+            <Plus size={18} />
+            <span className="hidden sm:inline">Add transaction</span>
           </button>
         </div>
 

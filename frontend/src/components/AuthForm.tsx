@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 type AuthMode = "login" | "register";
 
 const inputClassName =
-  "input-focus w-full rounded-xl px-3 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-60";
+  "input-focus w-full rounded-xl px-3.5 py-3 text-base outline-none transition disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
 
 export default function AuthForm({
   mode,
@@ -88,9 +88,9 @@ export default function AuthForm({
   }
 
   return (
-    <div className="glass w-full max-w-sm p-8">
+    <div className="glass w-full max-w-sm p-5 sm:p-8">
       <div className="mb-6 space-y-1">
-        <h1 className="font-display text-2xl font-bold">
+        <h1 className="font-display text-xl font-bold sm:text-2xl">
           {isRegister ? "Create your account" : "Welcome back"}
         </h1>
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
@@ -221,7 +221,7 @@ export default function AuthForm({
           <button
             type="submit"
             disabled={submitting}
-            className="bg-brand-gradient btn-press w-full rounded-xl py-2.5 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-65"
+            className="bg-brand-gradient btn-press min-h-11 w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-65"
           >
             {submitting
               ? isRegister ? "Creating account…" : "Logging in…"

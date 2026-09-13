@@ -27,7 +27,7 @@ export default function VerificationBanner() {
 
   return (
     <div
-      className="flex w-full items-center justify-between gap-4 border-b px-6 py-2.5 text-sm"
+      className="flex w-full flex-col items-start gap-2 border-b px-5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2.5"
       style={{
         background: "oklch(97% .06 80 / 0.7)",
         borderColor: "oklch(85% .1 75)",
@@ -44,7 +44,7 @@ export default function VerificationBanner() {
         type="button"
         onClick={handleResend}
         disabled={status === "sending" || status === "sent"}
-        className="shrink-0 font-medium underline underline-offset-2 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-11 shrink-0 items-center font-medium underline underline-offset-2 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0"
         style={{ color: "oklch(35% .12 75)" }}
       >
         {status === "sending" ? "Sending…" : status === "sent" ? "Sent" : "Resend verification"}

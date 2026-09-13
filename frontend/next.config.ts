@@ -8,6 +8,7 @@ const allowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS
 const nextConfig: NextConfig = {
   output: "standalone",
   allowedDevOrigins,
+  devIndicators: false,
 };
 
 export default nextConfig;

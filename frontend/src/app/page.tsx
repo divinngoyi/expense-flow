@@ -27,14 +27,14 @@ const features = [
 /* ── Page ─────────────────────────────────────────────────────────────── */
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-dvh flex-col">
       <FloatingHeader />
 
       {/* ── Hero ── */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-4 py-24">
+      <section className="flex min-h-[calc(100svh-5.5rem)] flex-col items-center justify-center px-5 py-20 text-center sm:min-h-0 sm:flex-1 sm:px-6 sm:py-24">
         {/* Badge */}
         <div
-          className="glass-subtle inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-6"
+          className="glass-subtle mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium sm:mb-6 sm:px-4"
           style={{
             color: "var(--sky-700)",
             animationName: "hero-enter",
@@ -50,9 +50,9 @@ export default function LandingPage() {
 
         {/* Headline */}
         <h1
-          className="font-display font-bold text-6xl lg:text-7xl max-w-3xl mb-6 leading-none"
+          className="font-display mb-6 max-w-3xl text-5xl font-bold leading-[0.94] text-balance sm:text-6xl lg:text-7xl"
           style={{
-            letterSpacing: "-1.8px",
+            letterSpacing: "-0.04em",
             animationName: "hero-enter",
             animationDuration: "480ms",
             animationTimingFunction: "var(--ease-out-quint)",
@@ -60,13 +60,16 @@ export default function LandingPage() {
             animationDelay: "80ms",
           }}
         >
-          See where every{" "}
-          <span className="text-gradient-brand">rand</span> goes.
+          <span className="block sm:inline">See where</span>{" "}
+          <span className="block sm:inline">
+            every <span style={{ color: "var(--primary)" }}>rand</span>
+          </span>{" "}
+          <span className="block sm:inline">goes.</span>
         </h1>
 
         {/* Subhead */}
         <p
-          className="text-lg max-w-xl mb-10"
+          className="mb-8 max-w-xl text-base leading-7 text-pretty sm:mb-10 sm:text-lg"
           style={{
             color: "var(--muted-foreground)",
             animationName: "hero-enter",
@@ -82,7 +85,7 @@ export default function LandingPage() {
 
         {/* CTA buttons */}
         <div
-          className="flex items-center gap-4"
+          className="flex flex-wrap items-center justify-center gap-3 sm:gap-4"
           style={{
             animationName: "hero-enter",
             animationDuration: "480ms",
@@ -93,24 +96,25 @@ export default function LandingPage() {
         >
           <Link
             href="/register"
-            className="bg-brand-gradient text-white px-6 py-3 rounded-xl font-semibold shadow-md"
+            className="bg-brand-gradient inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md sm:px-6"
           >
             Start free
           </Link>
           <Link
             href="/login"
-            className="glass-subtle px-6 py-3 rounded-xl font-medium"
+            className="glass-subtle inline-flex min-h-11 items-center justify-center rounded-xl px-5 py-2.5 text-sm font-medium sm:px-6"
             style={{ color: "var(--foreground)" }}
           >
-            I have an account
+            <span className="sm:hidden">Log in</span>
+            <span className="hidden sm:inline">I have an account</span>
           </Link>
         </div>
       </section>
 
       {/* ── Preview ── */}
-      <section id="preview" className="px-6 pb-24 max-w-5xl mx-auto w-full">
+      <section id="preview" className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6 sm:pb-24">
         <ScrollReveal className="text-center mb-10">
-          <h2 className="font-display font-bold text-3xl mb-3" style={{ letterSpacing: "-0.5px" }}>
+          <h2 className="font-display mb-3 text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.5px" }}>
             See it in action
           </h2>
           <p style={{ color: "var(--muted-foreground)" }}>
@@ -123,9 +127,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section id="features" className="px-6 pb-28 max-w-5xl mx-auto w-full">
+      <section id="features" className="mx-auto w-full max-w-5xl px-4 pb-24 sm:px-6 sm:pb-28">
         <ScrollReveal className="text-center mb-10">
-          <h2 className="font-display font-bold text-3xl mb-3" style={{ letterSpacing: "-0.5px" }}>
+          <h2 className="font-display mb-3 text-2xl font-bold sm:text-3xl" style={{ letterSpacing: "-0.5px" }}>
             Everything you need
           </h2>
           <p style={{ color: "var(--muted-foreground)" }}>
@@ -150,7 +154,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="text-center text-sm pb-8" style={{ color: "var(--muted-foreground)" }}>
+      <footer className="px-4 pb-8 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
         © 2026 Expense Flow
       </footer>
     </div>

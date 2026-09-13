@@ -35,7 +35,7 @@ export default function UpdatePasswordForm() {
   }
 
   return (
-    <div className="glass w-full max-w-sm space-y-6 p-8">
+    <div className="glass w-full max-w-sm space-y-6 p-5 sm:p-8">
       <div className="space-y-1">
         <h1 className="font-display text-2xl font-bold">Choose a new password</h1>
         <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>

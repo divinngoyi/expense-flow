@@ -10,7 +10,7 @@ const activeSyncs = new Map<string, Promise<AppUserDto>>();
 function SyncSkeleton() {
   return (
     <main
-      className="flex-1 p-5 pb-24 lg:p-8 lg:pb-8"
+      className="app-content flex-1"
       role="status"
       aria-label="Setting up your account"
     >
@@ -73,7 +73,7 @@ export default function UserSync({ children }: { children: ReactNode }) {
   if (!isLoaded || !user || syncedUserId !== user.id) {
     if (user && failedUserId === user.id) {
       return (
-        <main className="flex-1 p-5 pb-24 lg:p-8 lg:pb-8">
+        <main className="app-content flex-1">
           <div className="max-w-xl space-y-4 py-12" role="alert">
             <AlertCircle size={28} style={{ color: "var(--destructive)" }} />
             <div className="space-y-1.5">

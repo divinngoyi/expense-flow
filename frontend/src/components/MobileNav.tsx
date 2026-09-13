@@ -17,7 +17,8 @@ export default function MobileNav() {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t"
+      className="mobile-bottom-nav lg:hidden fixed bottom-0 inset-x-0 z-40 border-t"
+      aria-label="Primary navigation"
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.7))",
         backdropFilter: "blur(20px)",
@@ -26,15 +27,17 @@ export default function MobileNav() {
     >
       <div className="flex">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center gap-0.5 pt-2.5 pb-3 px-1"
+              aria-current={active ? "page" : undefined}
+              className="flex min-h-14 min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5"
               style={{
                 color: active ? "var(--primary)" : "var(--muted-foreground)",
-                transition: "color 160ms var(--ease-out-quart)",
+                background: active ? "oklch(92% .055 235 / .72)" : "transparent",
+                transition: "color 160ms var(--ease-out-quart), background 160ms var(--ease-out-quart)",
               }}
             >
               {/* Icon with relative container for the dot */}
@@ -44,8 +47,6 @@ export default function MobileNav() {
                   strokeWidth={active ? 2.5 : 1.75}
                   style={{ transition: "stroke-width 160ms, color 160ms" }}
                 />
-                {/* Active dot below the icon */}
-                {active && <span className="nav-dot" />}
               </div>
               <span
                 className="text-[10px] font-medium leading-tight"
