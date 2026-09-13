@@ -4,11 +4,14 @@ using ExpenseFlow.Domain.Entities;
 using ExpenseFlow.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace ExpenseFlow.Database.Services;
 
 public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) : IUserService
 {
+    private const string ExternalAuthUserIdIndex = "IX_AppUsers_ExternalAuthUserId";
+
     public async Task<AppUserDto> SyncUserAsync(SyncUserRequest request)
     {
         var user = await db.AppUsers
@@ -46,7 +49,21 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
             user.UpdatedAt = DateTime.UtcNow;
         }
 
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception) when (IsConcurrentUserInsert(exception))
+        {
+            logger.LogInformation(
+                "User {ExternalAuthUserId} was synced by a concurrent request",
+                request.ExternalAuthUserId);
+
+            db.ChangeTracker.Clear();
+            user = await db.AppUsers.SingleAsync(
+                u => u.ExternalAuthUserId == request.ExternalAuthUserId && !u.IsDeleted);
+        }
+
         return ToDto(user);
     }
 
@@ -59,4 +76,11 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
 
     private static AppUserDto ToDto(AppUser u) =>
         new(u.Id, u.ExternalAuthUserId, u.Email, u.DisplayName, u.CreatedAt);
+
+    private static bool IsConcurrentUserInsert(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+            ConstraintName: ExternalAuthUserIdIndex,
+        };
 }
