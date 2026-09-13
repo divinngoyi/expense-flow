@@ -2,18 +2,29 @@ using ExpenseFlow.Application.DTOs;
 using ExpenseFlow.Application.Services;
 using ExpenseFlow.Domain.Entities;
 using ExpenseFlow.Domain.Enums;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace ExpenseFlow.Database.Services;
 
-public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) : IUserService
+public class UserService(
+    ExpenseFlowDbContext db,
+    IMemoryCache cache,
+    ILogger<UserService> logger) : IUserService
 {
     private const string ExternalAuthUserIdIndex = "IX_AppUsers_ExternalAuthUserId";
+    private static readonly TimeSpan UserCacheDuration = TimeSpan.FromHours(1);
 
     public async Task<AppUserDto> SyncUserAsync(SyncUserRequest request)
     {
+        if (cache.TryGetValue<AppUserDto>(GetCacheKey(request.ExternalAuthUserId), out var cachedUser)
+            && cachedUser is not null)
+        {
+            return cachedUser;
+        }
+
         var user = await db.AppUsers
             .FirstOrDefaultAsync(u => u.ExternalAuthUserId == request.ExternalAuthUserId && !u.IsDeleted);
 
@@ -64,18 +75,36 @@ public class UserService(ExpenseFlowDbContext db, ILogger<UserService> logger) :
                 u => u.ExternalAuthUserId == request.ExternalAuthUserId && !u.IsDeleted);
         }
 
-        return ToDto(user);
+        var dto = ToDto(user);
+        CacheUser(dto);
+        return dto;
     }
 
     public async Task<AppUserDto?> GetByExternalAuthIdAsync(string externalAuthUserId)
     {
+        if (cache.TryGetValue<AppUserDto>(GetCacheKey(externalAuthUserId), out var cachedUser))
+        {
+            return cachedUser;
+        }
+
         var user = await db.AppUsers
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.ExternalAuthUserId == externalAuthUserId && !u.IsDeleted);
-        return user is null ? null : ToDto(user);
+        if (user is null) return null;
+
+        var dto = ToDto(user);
+        CacheUser(dto);
+        return dto;
     }
 
     private static AppUserDto ToDto(AppUser u) =>
         new(u.Id, u.ExternalAuthUserId, u.Email, u.DisplayName, u.CreatedAt);
+
+    private void CacheUser(AppUserDto user) =>
+        cache.Set(GetCacheKey(user.ExternalAuthUserId), user, UserCacheDuration);
+
+    private static string GetCacheKey(string externalAuthUserId) =>
+        $"app-user:{externalAuthUserId}";
 
     private static bool IsConcurrentUserInsert(DbUpdateException exception) =>
         exception.InnerException is PostgresException

@@ -13,6 +13,7 @@ public class CalendarService(ExpenseFlowDbContext db) : ICalendarService
         var to = from.AddMonths(1).AddDays(-1);
 
         var daily = await db.Transactions
+            .AsNoTracking()
             .Where(t => t.UserId == userId && !t.IsDeleted
                      && t.TransactionStatus == TransactionStatus.Confirmed
                      && t.TransactionDate >= from && t.TransactionDate <= to)
@@ -37,6 +38,7 @@ public class CalendarService(ExpenseFlowDbContext db) : ICalendarService
     public async Task<CalendarDayDetailDto> GetDayAsync(Guid userId, DateOnly date)
     {
         var transactions = await db.Transactions
+            .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.TransactionSource)
             .Where(t => t.UserId == userId && !t.IsDeleted && t.TransactionDate == date)

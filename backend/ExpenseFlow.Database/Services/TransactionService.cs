@@ -15,6 +15,7 @@ public class TransactionService(ExpenseFlowDbContext db, ILogger<TransactionServ
         var to = from.AddMonths(1).AddDays(-1);
 
         return await db.Transactions
+            .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.TransactionSource)
             .Where(t => t.UserId == userId && !t.IsDeleted
@@ -28,6 +29,7 @@ public class TransactionService(ExpenseFlowDbContext db, ILogger<TransactionServ
     public async Task<TransactionDto> GetByIdAsync(Guid userId, Guid transactionId)
     {
         var t = await db.Transactions
+            .AsNoTracking()
             .Include(t => t.Category)
             .Include(t => t.TransactionSource)
             .FirstOrDefaultAsync(t => t.Id == transactionId && t.UserId == userId && !t.IsDeleted)

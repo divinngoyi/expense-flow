@@ -11,6 +11,7 @@ public class CategoryService(ExpenseFlowDbContext db) : ICategoryService
     public async Task<List<CategoryDto>> GetCategoriesAsync(Guid userId)
     {
         return await db.Categories
+            .AsNoTracking()
             .Where(c => c.UserId == userId && !c.IsArchived)
             .OrderBy(c => c.Name)
             .Select(c => ToDto(c))

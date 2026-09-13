@@ -18,22 +18,26 @@ public class DashboardService(ExpenseFlowDbContext db) : IDashboardService
             t.UserId == userId && !t.IsDeleted &&
             t.TransactionStatus == TransactionStatus.Confirmed);
 
-        var current = await confirmed
-            .Where(t => t.TransactionDate >= from && t.TransactionDate <= to)
-            .GroupBy(t => t.TransactionType)
-            .Select(g => new { Type = g.Key, Total = g.Sum(t => t.Amount) })
+        var totals = await confirmed
+            .AsNoTracking()
+            .Where(t => t.TransactionDate >= prevFrom && t.TransactionDate <= to)
+            .GroupBy(t => new
+            {
+                IsCurrent = t.TransactionDate >= from,
+                t.TransactionType,
+            })
+            .Select(g => new
+            {
+                g.Key.IsCurrent,
+                Type = g.Key.TransactionType,
+                Total = g.Sum(t => t.Amount),
+            })
             .ToListAsync();
 
-        var previous = await confirmed
-            .Where(t => t.TransactionDate >= prevFrom && t.TransactionDate <= prevTo)
-            .GroupBy(t => t.TransactionType)
-            .Select(g => new { Type = g.Key, Total = g.Sum(t => t.Amount) })
-            .ToListAsync();
-
-        var moneyIn = current.FirstOrDefault(x => x.Type == TransactionType.MoneyIn)?.Total ?? 0;
-        var moneyOut = current.FirstOrDefault(x => x.Type == TransactionType.MoneyOut)?.Total ?? 0;
-        var prevIn = previous.FirstOrDefault(x => x.Type == TransactionType.MoneyIn)?.Total ?? 0;
-        var prevOut = previous.FirstOrDefault(x => x.Type == TransactionType.MoneyOut)?.Total ?? 0;
+        var moneyIn = totals.FirstOrDefault(x => x.IsCurrent && x.Type == TransactionType.MoneyIn)?.Total ?? 0;
+        var moneyOut = totals.FirstOrDefault(x => x.IsCurrent && x.Type == TransactionType.MoneyOut)?.Total ?? 0;
+        var prevIn = totals.FirstOrDefault(x => !x.IsCurrent && x.Type == TransactionType.MoneyIn)?.Total ?? 0;
+        var prevOut = totals.FirstOrDefault(x => !x.IsCurrent && x.Type == TransactionType.MoneyOut)?.Total ?? 0;
 
         decimal? inChange = prevIn > 0 ? Math.Round((moneyIn - prevIn) / prevIn * 100, 1) : null;
         decimal? outChange = prevOut > 0 ? Math.Round((moneyOut - prevOut) / prevOut * 100, 1) : null;
@@ -48,28 +52,26 @@ public class DashboardService(ExpenseFlowDbContext db) : IDashboardService
         var from = new DateOnly(year, month, 1);
         var to = from.AddMonths(1).AddDays(-1);
 
-        // Fetch minimal projection server-side (EF Core can't translate Join+GroupBy+aggregate together)
         var rows = await db.Transactions
+            .AsNoTracking()
             .Where(t => t.UserId == userId && !t.IsDeleted
                      && t.TransactionStatus == TransactionStatus.Confirmed
                      && t.TransactionType == TransactionType.MoneyOut
                      && t.TransactionDate >= from && t.TransactionDate <= to
                      && t.CategoryId != null)
-            .Select(t => new { t.CategoryId, t.Amount })
+            .Select(transaction => new
+            {
+                CategoryId = transaction.CategoryId!.Value,
+                CategoryName = transaction.Category!.Name,
+                transaction.Amount,
+            })
             .ToListAsync();
 
-        var categoryIds = rows.Select(r => r.CategoryId!.Value).Distinct().ToList();
-
-        var nameMap = await db.Categories
-            .Where(c => categoryIds.Contains(c.Id))
-            .Select(c => new { c.Id, c.Name })
-            .ToDictionaryAsync(c => c.Id, c => c.Name);
-
         return rows
-            .GroupBy(r => r.CategoryId!.Value)
+            .GroupBy(row => new { row.CategoryId, row.CategoryName })
             .Select(g => new CategoryBreakdownItemDto(
-                g.Key,
-                nameMap.GetValueOrDefault(g.Key, "Uncategorised"),
+                g.Key.CategoryId,
+                g.Key.CategoryName,
                 g.Sum(r => r.Amount),
                 g.Count()))
             .OrderByDescending(x => x.Total)
@@ -82,6 +84,7 @@ public class DashboardService(ExpenseFlowDbContext db) : IDashboardService
         var to = from.AddMonths(1).AddDays(-1);
 
         return await db.Transactions
+            .AsNoTracking()
             .Include(t => t.TransactionSource)
             .Where(t => t.UserId == userId && !t.IsDeleted
                      && t.TransactionStatus == TransactionStatus.Confirmed

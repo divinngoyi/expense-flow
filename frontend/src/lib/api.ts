@@ -122,7 +122,27 @@ export interface CalendarDayDetailDto {
   totalMoneyOut: number;
 }
 
-async function fetchApi<T>(
+const GET_CACHE_TTL_MS = 30_000;
+
+type CacheEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const responseCache = new Map<string, CacheEntry>();
+const inFlightRequests = new Map<string, Promise<unknown>>();
+const cacheVersions = new Map<string, number>();
+
+function invalidateUserCache(userId: string) {
+  cacheVersions.set(userId, (cacheVersions.get(userId) ?? 0) + 1);
+  const prefix = `${userId}:`;
+
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(prefix)) responseCache.delete(key);
+  }
+}
+
+async function performApiRequest<T>(
   token: string,
   path: string,
   options?: RequestInit
@@ -145,14 +165,55 @@ async function fetchApi<T>(
   return res.json();
 }
 
+async function fetchApi<T>(
+  token: string,
+  userId: string,
+  path: string,
+  options?: RequestInit,
+): Promise<T> {
+  const method = (options?.method ?? "GET").toUpperCase();
+
+  if (method !== "GET") {
+    const result = await performApiRequest<T>(token, path, options);
+    invalidateUserCache(userId);
+    return result;
+  }
+
+  const cacheKey = `${userId}:${path}`;
+  const cached = responseCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value as T;
+  }
+  responseCache.delete(cacheKey);
+
+  const inFlight = inFlightRequests.get(cacheKey);
+  if (inFlight) return inFlight as Promise<T>;
+
+  const cacheVersion = cacheVersions.get(userId) ?? 0;
+  const request = performApiRequest<T>(token, path, options)
+    .then((value) => {
+      if ((cacheVersions.get(userId) ?? 0) === cacheVersion) {
+        responseCache.set(cacheKey, {
+          expiresAt: Date.now() + GET_CACHE_TTL_MS,
+          value,
+        });
+      }
+      return value;
+    })
+    .finally(() => inFlightRequests.delete(cacheKey));
+
+  inFlightRequests.set(cacheKey, request);
+  return request;
+}
+
 // ── Hook-based client (use inside React components) ──────────────────────────
 export function useApi() {
-  const { getAccessToken } = useAuth();
+  const { user, getAccessToken } = useAuth();
 
   async function call<T>(path: string, options?: RequestInit): Promise<T> {
     const token = await getAccessToken();
-    if (!token) throw new Error("Not authenticated");
-    return fetchApi<T>(token, path, options);
+    if (!token || !user) throw new Error("Not authenticated");
+    return fetchApi<T>(token, user.id, path, options);
   }
 
   const currentMonth = () => {

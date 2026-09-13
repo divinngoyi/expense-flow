@@ -71,6 +71,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddMemoryCache();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 var allowedOrigins = builder.Configuration["CORS:AllowedOrigins"]
@@ -122,6 +123,23 @@ var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("ExpenseFlow API starting — Environment: {Env}", app.Environment.EnvironmentName);
 
+// Pay the hosted Postgres connection and EF model warm-up cost during API startup
+// instead of making the first signed-in user wait for it on the dashboard.
+try
+{
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    await using var scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<ExpenseFlowDbContext>();
+    await db.Database.OpenConnectionAsync();
+    _ = await db.AppUsers.AsNoTracking().AnyAsync();
+    await db.Database.CloseConnectionAsync();
+    logger.LogInformation("Database connection warmed in {ElapsedMs:F1} ms", stopwatch.Elapsed.TotalMilliseconds);
+}
+catch (Exception exception)
+{
+    logger.LogWarning(exception, "Database warm-up failed; the first request will retry normally");
+}
+
 // ── Global exception handler ──────────────────────────────────────────────────
 app.Use(async (context, next) =>
 {
@@ -167,9 +185,16 @@ app.Use(async (context, next) =>
 app.Use(async (context, next) =>
 {
     var log = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
     log.LogInformation("→ {Method} {Path}", context.Request.Method, context.Request.Path);
     await next();
-    log.LogInformation("← {Method} {Path} {Status}", context.Request.Method, context.Request.Path, context.Response.StatusCode);
+    stopwatch.Stop();
+    log.LogInformation(
+        "← {Method} {Path} {Status} in {ElapsedMs:F1} ms",
+        context.Request.Method,
+        context.Request.Path,
+        context.Response.StatusCode,
+        stopwatch.Elapsed.TotalMilliseconds);
 });
 
 app.UseSwagger();

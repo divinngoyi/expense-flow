@@ -11,6 +11,7 @@ public class TransactionSourceService(ExpenseFlowDbContext db) : ITransactionSou
     public async Task<List<TransactionSourceDto>> GetSourcesAsync(Guid userId)
     {
         return await db.TransactionSources
+            .AsNoTracking()
             .Where(s => s.UserId == userId && !s.IsArchived)
             .OrderBy(s => s.SourceType).ThenBy(s => s.Name)
             .Select(s => ToDto(s))
